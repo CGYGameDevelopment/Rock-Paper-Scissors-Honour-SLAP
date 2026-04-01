@@ -23,16 +23,27 @@ Friend-based only — no public matchmaking. One player creates a room and share
 ## Tech Stack
 
 - **Server:** Node.js, Express, Socket.io
-- **Client:** Plain HTML5/CSS3/JavaScript
+- **Client:** Plain HTML5/CSS3/JavaScript — no build step required
 
-## Running the Server
+## Project Structure
+
+```
+server.js       — Express + Socket.io server, event routing
+room.js         — Room state, game logic, phase transitions
+client/
+  index.html    — Game UI
+  style.css     — Styles
+  game.js       — Socket.io client, all UI and game logic
+```
+
+## Running Locally
 
 ```bash
 npm install
 npm start
 ```
 
-The server runs on port `3000` by default. Set the `PORT` environment variable to override.
+Open `http://localhost:3000` in two browser tabs or on two devices on the same network. The server runs on port `3000` by default. Set the `PORT` environment variable to override.
 
 ## License
 
