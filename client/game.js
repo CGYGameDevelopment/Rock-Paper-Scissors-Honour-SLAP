@@ -2,7 +2,6 @@
 
 const socket = io();
 
-let myRole = null; // 'attacker' | 'defender'
 let countdownInterval = null;
 
 // ─── Screen helpers ───────────────────────────────────────────────────────────
@@ -18,7 +17,7 @@ function showOnly(id) {
 }
 
 function stopCountdown() {
-  stopCountdown();
+  clearInterval(countdownInterval);
   countdownInterval = null;
 }
 
@@ -81,51 +80,60 @@ document.querySelectorAll('.rps-btn').forEach(btn => {
 });
 
 socket.on('phase1_draw', ({ yourChoice, opponentChoice }) => {
+  stopCountdown();
   document.getElementById('phase1-status').textContent =
     `Draw! You: ${yourChoice} — Them: ${opponentChoice}. Go again!`;
 });
 
-socket.on('phase1_result', ({ yourChoice, opponentChoice, yourRole }) => {
-  myRole = yourRole;
-  // phase2_start follows immediately; just update status briefly
+// RPS choices from the current round — shown on the phase 2 screen so both
+// players can see the outcome, but without being told who should slap/dodge.
+// Working that out from the choices is part of the game.
+let phase1YourChoice = null;
+let phase1OpponentChoice = null;
+
+socket.on('phase1_result', ({ yourChoice, opponentChoice }) => {
+  // Store choices for display during the slap phase.
+  // The server deliberately does not send role (attacker/defender) — players
+  // must deduce the correct action from the RPS outcome themselves.
+  phase1YourChoice = yourChoice;
+  phase1OpponentChoice = opponentChoice;
   document.getElementById('phase1-status').textContent =
-    `You: ${yourChoice} — Them: ${opponentChoice}. You are the ${yourRole}!`;
+    `You: ${yourChoice} — Them: ${opponentChoice}.`;
 });
 
 // ─── Phase 2 ──────────────────────────────────────────────────────────────────
 
 socket.on('phase2_start', () => {
-  const isAttacker = myRole === 'attacker';
-  const action = isAttacker ? 'slap' : 'dodge';
+  const slapBtn  = document.getElementById('btn-slap');
+  const dodgeBtn = document.getElementById('btn-dodge');
 
-  document.getElementById('phase2-role').textContent =
-    isAttacker ? 'You are the ATTACKER — Slap!' : 'You are the DEFENDER — Dodge!';
+  // Show both RPS choices so players have the information to work out the
+  // correct action — but the game intentionally does not tell them which
+  // button to press. That's the skill.
+  document.getElementById('phase2-rps-result').textContent =
+    `You played ${phase1YourChoice} — They played ${phase1OpponentChoice}`;
 
-  const btn = document.getElementById('btn-action');
-  btn.textContent = action.toUpperCase();
-  btn.disabled = false;
-  btn.onclick = () => {
-    btn.disabled = true;
+  slapBtn.disabled  = false;
+  dodgeBtn.disabled = false;
+
+  const sendAction = (action) => {
+    slapBtn.disabled  = true;
+    dodgeBtn.disabled = true;
     socket.emit('phase2_action', { action, timestamp: Date.now() });
   };
+
+  slapBtn.onclick  = () => sendAction('slap');
+  dodgeBtn.onclick = () => sendAction('dodge');
 
   startCountdown('phase2-timer', 3);
   showOnly('screen-phase2');
 });
 
-socket.on('phase2_result', ({ outcome, yourRole, yourAction, opponentAction, yourLives, opponentLives }) => {
+socket.on('phase2_result', ({ yourAction, opponentAction, yourLives, opponentLives }) => {
   stopCountdown();
 
-  const outcomeText = {
-    fast_slap:        'Slap lands!',
-    successful_dodge: 'Dodge successful!',
-    attacker_illegal: 'Attacker acted illegally!',
-    defender_illegal: 'Defender acted illegally!',
-    double_illegal:   'Both acted illegally!',
-  }[outcome] ?? outcome;
-
   document.getElementById('round-outcome').textContent =
-    `${outcomeText} (You: ${yourAction ?? 'none'} — Them: ${opponentAction ?? 'none'})`;
+    `You chose: ${yourAction ?? 'none'} — Opponent chose: ${opponentAction ?? 'none'}`;
   document.getElementById('round-lives').textContent =
     `Lives — You: ${yourLives}  Them: ${opponentLives}`;
 
@@ -134,7 +142,7 @@ socket.on('phase2_result', ({ outcome, yourRole, yourAction, opponentAction, you
 
 // ─── Game Over ────────────────────────────────────────────────────────────────
 
-socket.on('game_over', ({ result, outcome, yourLives, opponentLives }) => {
+socket.on('game_over', ({ result, yourLives, opponentLives }) => {
   stopCountdown();
 
   const resultText = { win: 'You win!', loss: 'You lose.', draw: 'Draw!' }[result] ?? result;
@@ -153,7 +161,6 @@ socket.on('opponent_disconnected', () => {
 });
 
 document.getElementById('btn-again').addEventListener('click', () => {
-  myRole = null;
   document.getElementById('lobby-error').textContent = '';
   document.getElementById('input-code').value = '';
   showOnly('screen-lobby');

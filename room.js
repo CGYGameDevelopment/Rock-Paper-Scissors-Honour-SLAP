@@ -17,6 +17,7 @@ class Room {
     this.state = 'waiting'; // waiting | phase1 | phase2 | resolving | finished
     this.expiryTimer = null;
     this.phaseTimer = null;
+    this.roundTimer = null;
     this.phase1Choices = {}; // { socketId: 'rock'|'paper'|'scissors' }
     this.phase2Actions = {}; // { socketId: { action: 'slap'|'dodge', timestamp: number } }
     this.roles = {};         // { attacker: socketId, defender: socketId }
@@ -93,21 +94,23 @@ class Room {
         defender = shuffled[1].socketId;
         // fall through to role assignment below
       } else {
-        this.startPhase1();
+        this.roundTimer = setTimeout(() => this.startPhase1(), 2000);
         return;
       }
     }
 
     this.roles = { attacker, defender };
 
-    // Tell each player their role and what was chosen — then Phase 2 begins
-    // immediately; the client must react to their role without delay.
+    // Tell each player what was chosen in RPS — Phase 2 follows immediately.
+    // Roles (attacker / defender) are deliberately NOT sent to clients: part of
+    // the game's skill is each player deducing from the RPS outcome whether they
+    // should slap or dodge, and acting on that quickly.
     for (const player of this.players) {
       const opponent = this.players.find(p => p.socketId !== player.socketId);
       this.io.to(player.socketId).emit('phase1_result', {
         yourChoice: this.phase1Choices[player.socketId],
         opponentChoice: this.phase1Choices[opponent.socketId],
-        yourRole: player.socketId === attacker ? 'attacker' : 'defender',
+        // yourRole intentionally omitted — server-side only
       });
     }
 
@@ -213,14 +216,14 @@ class Room {
         const opponent = this.players.find(p => p.socketId !== player.socketId);
         this.io.to(player.socketId).emit('phase2_result', {
           outcome,
-          yourRole: player.socketId === attacker ? 'attacker' : 'defender',
+          // yourRole intentionally omitted — roles stay server-side only
           yourAction: this.phase2Actions[player.socketId]?.action ?? null,
           opponentAction: this.phase2Actions[opponent.socketId]?.action ?? null,
           yourLives: player.lives,
           opponentLives: opponent.lives,
         });
       }
-      this.startPhase1(true);
+      this.roundTimer = setTimeout(() => this.startPhase1(true), 2000);
     }
   }
 
@@ -229,6 +232,7 @@ class Room {
   destroy() {
     clearTimeout(this.expiryTimer);
     clearTimeout(this.phaseTimer);
+    clearTimeout(this.roundTimer);
     for (const player of this.players) {
       const socket = this.io.sockets.sockets.get(player.socketId);
       if (socket) socket.data.roomCode = null;

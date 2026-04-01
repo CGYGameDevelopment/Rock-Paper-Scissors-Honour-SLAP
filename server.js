@@ -127,7 +127,6 @@ io.on('connection', (socket) => {
     const room = getRoomForSocket(socket);
     if (!room) return;
 
-    const code = room.code;
     const opponent = room.players.find(p => p.socketId !== socket.id);
 
     if (room.state !== 'waiting' && room.state !== 'finished') {
