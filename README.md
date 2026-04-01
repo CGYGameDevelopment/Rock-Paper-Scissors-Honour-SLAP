@@ -23,7 +23,7 @@ Friend-based only — no public matchmaking. One player creates a room and share
 ## Tech Stack
 
 - **Server:** Node.js, Express, Socket.io
-- **Client:** Plain HTML5/CSS3/Canvas *(not yet implemented)*
+- **Client:** Plain HTML5/CSS3/JavaScript
 
 ## Running the Server
 
