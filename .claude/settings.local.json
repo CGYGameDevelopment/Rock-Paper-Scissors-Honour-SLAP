@@ -43,7 +43,10 @@
       "Bash(powershell.exe -Command \"Set-Location ''C:\\\\Users\\\\conal\\\\Desktop\\\\Rock-Paper-Scissors-Honour-SLAP''; & ''C:\\\\Program Files\\\\nodejs\\\\npm.cmd'' install --save-dev jest 2>&1\")",
       "Bash(powershell.exe -Command \"Set-Location ''C:\\\\Users\\\\conal\\\\Desktop\\\\Rock-Paper-Scissors-Honour-SLAP''; & ''C:\\\\Program Files\\\\nodejs\\\\npx.cmd'' jest --no-coverage 2>&1\")",
       "Bash(powershell.exe -Command \"$env:PATH += '';C:\\\\Program Files\\\\nodejs''; Set-Location ''C:\\\\Users\\\\conal\\\\Desktop\\\\Rock-Paper-Scissors-Honour-SLAP''; & ''C:\\\\Program Files\\\\nodejs\\\\node.exe'' node_modules\\\\.bin\\\\jest --no-coverage 2>&1\")",
-      "Bash(powershell.exe -Command \"Set-Location ''C:\\\\Users\\\\conal\\\\Desktop\\\\Rock-Paper-Scissors-Honour-SLAP''; & ''C:\\\\Program Files\\\\nodejs\\\\node.exe'' ''node_modules\\\\jest-cli\\\\bin\\\\jest.js'' --no-coverage 2>&1\")"
+      "Bash(powershell.exe -Command \"Set-Location ''C:\\\\Users\\\\conal\\\\Desktop\\\\Rock-Paper-Scissors-Honour-SLAP''; & ''C:\\\\Program Files\\\\nodejs\\\\node.exe'' ''node_modules\\\\jest-cli\\\\bin\\\\jest.js'' --no-coverage 2>&1\")",
+      "Bash(xargs wc:*)",
+      "Bash(find . -not -path './node_modules/*' -not -path './.git/*' -not -path './.claude/*' -type f -exec ls -lh {})",
+      "Bash(sort -k2)"
     ]
   }
 }
