@@ -14,9 +14,10 @@ class Room {
     this.io = io;
     this.rooms = rooms;
     this.players = [];       // [{ socketId, lives }]
-    this.state = 'waiting'; // waiting | phase1 | phase2 | resolving | finished
+    this.state = 'waiting'; // waiting | phase1 | draw_delay | phase2 | resolving | finished
     this.expiryTimer = null;
-    this.phaseTimer = null;
+    this.phase1Timer = null;
+    this.phase2Timer = null;
     this.roundTimer = null;
     this.phase1Choices = {}; // { socketId: 'rock'|'paper'|'scissors' }
     this.phase2Actions = {}; // { socketId: { action: 'slap'|'dodge', timestamp: number } }
@@ -41,7 +42,7 @@ class Room {
 
     // If a player hasn't chosen after 5s, assign them a random choice so
     // the game never stalls.
-    this.phaseTimer = setTimeout(() => {
+    this.phase1Timer = setTimeout(() => {
       for (const player of this.players) {
         if (!this.phase1Choices[player.socketId]) {
           const random = RPS_CHOICES[Math.floor(Math.random() * RPS_CHOICES.length)];
@@ -58,7 +59,7 @@ class Room {
     this.phase1Choices[socketId] = choice;
 
     if (Object.keys(this.phase1Choices).length === this.players.length) {
-      clearTimeout(this.phaseTimer);
+      clearTimeout(this.phase1Timer);
       this.resolvePhase1();
     }
   }
@@ -94,6 +95,9 @@ class Room {
         defender = shuffled[1].socketId;
         // fall through to role assignment below
       } else {
+        // Leave 'phase1' state during the delay so any late-arriving rps_choice
+        // packet (delayed by network) is rejected by the server.state check.
+        this.state = 'draw_delay';
         this.roundTimer = setTimeout(() => this.startPhase1(), 2000);
         return;
       }
@@ -124,7 +128,7 @@ class Room {
     this.phase2Actions = {};
     this.io.to(this.code).emit('phase2_start');
 
-    this.phaseTimer = setTimeout(() => this.resolvePhase2(), PHASE2_DURATION_MS);
+    this.phase2Timer = setTimeout(() => this.resolvePhase2(), PHASE2_DURATION_MS);
   }
 
   receivePhase2Action(socketId, action, timestamp) {
@@ -133,7 +137,7 @@ class Room {
     this.phase2Actions[socketId] = { action, timestamp };
 
     if (Object.keys(this.phase2Actions).length === this.players.length) {
-      clearTimeout(this.phaseTimer);
+      clearTimeout(this.phase2Timer);
       this.resolvePhase2();
     }
   }
@@ -186,8 +190,8 @@ class Room {
     const attackerPlayer = this.players.find(p => p.socketId === attacker);
     const defenderPlayer = this.players.find(p => p.socketId === defender);
 
-    if (attackerLosesLife) attackerPlayer.lives--;
-    if (defenderLosesLife) defenderPlayer.lives--;
+    if (attackerLosesLife) attackerPlayer.lives = Math.max(0, attackerPlayer.lives - 1);
+    if (defenderLosesLife) defenderPlayer.lives = Math.max(0, defenderPlayer.lives - 1);
 
     const matchOver = attackerPlayer.lives <= 0 || defenderPlayer.lives <= 0;
 
@@ -231,7 +235,8 @@ class Room {
 
   destroy() {
     clearTimeout(this.expiryTimer);
-    clearTimeout(this.phaseTimer);
+    clearTimeout(this.phase1Timer);
+    clearTimeout(this.phase2Timer);
     clearTimeout(this.roundTimer);
     for (const player of this.players) {
       const socket = this.io.sockets.sockets.get(player.socketId);

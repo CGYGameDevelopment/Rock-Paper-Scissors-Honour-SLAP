@@ -53,7 +53,9 @@ socket.on('room_created', ({ code }) => {
 
 socket.on('room_error', ({ message }) => {
   document.getElementById('lobby-error').textContent = message;
-  showOnly('screen-lobby');
+  const inActiveGame = ['screen-phase1', 'screen-phase2', 'screen-round-result']
+    .some(id => !document.getElementById(id).hidden);
+  if (!inActiveGame) showOnly('screen-lobby');
 });
 
 socket.on('room_expired', () => {
