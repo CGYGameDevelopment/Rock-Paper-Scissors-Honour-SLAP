@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>RPS: Honour SLAP</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- LOBBY -->
+  <div id="screen-lobby">
+    <h1>RPS: Honour SLAP</h1>
+    <button id="btn-create">Create Room</button>
+    <hr>
+    <input id="input-code" type="text" maxlength="4" placeholder="Room code">
+    <button id="btn-join">Join Room</button>
+    <p id="lobby-error" class="error"></p>
+  </div>
+
+  <!-- WAITING -->
+  <div id="screen-waiting" hidden>
+    <p>Room code: <strong id="room-code-display"></strong></p>
+    <p>Waiting for opponent...</p>
+  </div>
+
+  <!-- PHASE 1 -->
+  <div id="screen-phase1" hidden>
+    <p id="phase1-status"></p>
+    <p>Time: <span id="phase1-timer"></span>s</p>
+    <button class="rps-btn" data-choice="rock">Rock</button>
+    <button class="rps-btn" data-choice="paper">Paper</button>
+    <button class="rps-btn" data-choice="scissors">Scissors</button>
+  </div>
+
+  <!-- PHASE 2 -->
+  <div id="screen-phase2" hidden>
+    <p id="phase2-role"></p>
+    <p>Time: <span id="phase2-timer"></span>s</p>
+    <button id="btn-action"></button>
+  </div>
+
+  <!-- ROUND RESULT -->
+  <div id="screen-round-result" hidden>
+    <p id="round-outcome"></p>
+    <p id="round-lives"></p>
+    <p>Next round starting...</p>
+  </div>
+
+  <!-- GAME OVER -->
+  <div id="screen-gameover" hidden>
+    <p id="gameover-result"></p>
+    <p id="gameover-lives"></p>
+    <button id="btn-again">Play Again</button>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>

@@ -6,6 +6,7 @@ const { Server } = require('socket.io');
 const Room = require('./room');
 
 const app = express();
+app.use(express.static('client'));
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: { origin: process.env.ALLOWED_ORIGIN || false },
@@ -48,7 +49,7 @@ io.on('connection', (socket) => {
     if (!code) {
       return socket.emit('room_error', { message: 'Could not generate a room code. Try again.' });
     }
-    const room = new Room(code, io);
+    const room = new Room(code, io, rooms);
     rooms.set(code, room);
 
     room.addPlayer(socket);
@@ -60,7 +61,6 @@ io.on('connection', (socket) => {
       if (room.state === 'waiting') {
         socket.emit('room_expired');
         room.destroy();
-        rooms.delete(code);
       }
     }, ROOM_EXPIRY_MS);
   });
@@ -95,8 +95,7 @@ io.on('connection', (socket) => {
     socket.join(code);
 
     // Both players are in — start the game.
-    io.to(code).emit('game_start');
-    room.startPhase1();
+    room.startPhase1(true);
   });
 
   // ── Phase 1: RPS choice ────────────────────────────────────────────────────
@@ -138,7 +137,6 @@ io.on('connection', (socket) => {
     }
 
     room.destroy();
-    rooms.delete(code);
   });
 });
 

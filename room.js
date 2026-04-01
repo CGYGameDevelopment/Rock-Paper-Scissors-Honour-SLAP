@@ -3,14 +3,16 @@
 const PHASE1_DURATION_MS = 5000;
 const PHASE2_DURATION_MS = 3000;
 const RPS_CHOICES = ['rock', 'paper', 'scissors'];
+const MAX_DRAWS = 5;
 
 // What each choice beats
 const BEATS = { rock: 'scissors', scissors: 'paper', paper: 'rock' };
 
 class Room {
-  constructor(code, io) {
+  constructor(code, io, rooms) {
     this.code = code;
     this.io = io;
+    this.rooms = rooms;
     this.players = [];       // [{ socketId, lives }]
     this.state = 'waiting'; // waiting | phase1 | phase2 | resolving | finished
     this.expiryTimer = null;
@@ -18,6 +20,7 @@ class Room {
     this.phase1Choices = {}; // { socketId: 'rock'|'paper'|'scissors' }
     this.phase2Actions = {}; // { socketId: { action: 'slap'|'dodge', timestamp: number } }
     this.roles = {};         // { attacker: socketId, defender: socketId }
+    this.drawCount = 0;
   }
 
   // ─── Setup ────────────────────────────────────────────────────────────────
@@ -29,9 +32,10 @@ class Room {
 
   // ─── Phase 1: Rock, Paper, Scissors ──────────────────────────────────────
 
-  startPhase1() {
+  startPhase1(newRound = false) {
     this.state = 'phase1';
     this.phase1Choices = {};
+    if (newRound) this.drawCount = 0;
     this.io.to(this.code).emit('phase1_start');
 
     // If a player hasn't chosen after 5s, assign them a random choice so
@@ -72,7 +76,8 @@ class Room {
       attacker = p2.socketId;
       defender = p1.socketId;
     } else {
-      // Draw — tell each player what was chosen and repeat
+      // Draw — tell each player what was chosen and repeat (up to MAX_DRAWS times)
+      this.drawCount++;
       for (const player of this.players) {
         const opponent = this.players.find(p => p.socketId !== player.socketId);
         this.io.to(player.socketId).emit('phase1_draw', {
@@ -80,8 +85,17 @@ class Room {
           opponentChoice: this.phase1Choices[opponent.socketId],
         });
       }
-      this.startPhase1();
-      return;
+      if (this.drawCount >= MAX_DRAWS) {
+        // Force random role assignment so the game can never stall indefinitely.
+        this.drawCount = 0;
+        const shuffled = [...this.players].sort(() => Math.random() - 0.5);
+        attacker = shuffled[0].socketId;
+        defender = shuffled[1].socketId;
+        // fall through to role assignment below
+      } else {
+        this.startPhase1();
+        return;
+      }
     }
 
     this.roles = { attacker, defender };
@@ -192,6 +206,7 @@ class Room {
           opponentLives: opponent.lives,
         });
       }
+      this.destroy();
     } else {
       // Inform each player of the round result then go straight back to Phase 1.
       for (const player of this.players) {
@@ -205,7 +220,7 @@ class Room {
           opponentLives: opponent.lives,
         });
       }
-      this.startPhase1();
+      this.startPhase1(true);
     }
   }
 
@@ -219,6 +234,7 @@ class Room {
       if (socket) socket.data.roomCode = null;
     }
     this.state = 'finished';
+    this.rooms.delete(this.code);
   }
 }
 

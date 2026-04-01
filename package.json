@@ -4,7 +4,11 @@
   "description": "Rock, Paper, Scissors: Honour SLAP — web multiplayer server",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "test": "jest"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
   },
   "dependencies": {
     "express": "^4.18.2",
