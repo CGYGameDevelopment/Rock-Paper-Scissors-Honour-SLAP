@@ -40,7 +40,7 @@ document.getElementById('btn-create').addEventListener('click', () => {
 });
 
 document.getElementById('btn-join').addEventListener('click', () => {
-  const code = document.getElementById('input-code').value.trim().toUpperCase();
+  const code = document.getElementById('input-code').value.trim();
   document.getElementById('lobby-error').textContent = '';
   if (!code) return;
   socket.emit('join_room', { code });
@@ -65,10 +65,10 @@ socket.on('room_expired', () => {
 
 // ─── Phase 1 ──────────────────────────────────────────────────────────────────
 
-socket.on('phase1_start', () => {
+socket.on('phase1_start', ({ duration }) => {
   document.getElementById('phase1-status').textContent = 'Choose your move!';
   document.querySelectorAll('.rps-btn').forEach(btn => btn.disabled = false);
-  startCountdown('phase1-timer', 5);
+  startCountdown('phase1-timer', duration / 1000);
   showOnly('screen-phase1');
 });
 
@@ -105,7 +105,7 @@ socket.on('phase1_result', ({ yourChoice, opponentChoice }) => {
 
 // ─── Phase 2 ──────────────────────────────────────────────────────────────────
 
-socket.on('phase2_start', () => {
+socket.on('phase2_start', ({ duration }) => {
   const slapBtn  = document.getElementById('btn-slap');
   const dodgeBtn = document.getElementById('btn-dodge');
 
@@ -127,7 +127,7 @@ socket.on('phase2_start', () => {
   slapBtn.onclick  = () => sendAction('slap');
   dodgeBtn.onclick = () => sendAction('dodge');
 
-  startCountdown('phase2-timer', 3);
+  startCountdown('phase2-timer', duration / 1000);
   showOnly('screen-phase2');
 });
 

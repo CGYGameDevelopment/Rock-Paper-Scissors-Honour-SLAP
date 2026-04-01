@@ -2,8 +2,11 @@
 
 const PHASE1_DURATION_MS = 5000;
 const PHASE2_DURATION_MS = 3000;
+const DRAW_REPEAT_DELAY_MS = 2000;
+const NEXT_ROUND_DELAY_MS = 2000;
 const RPS_CHOICES = ['rock', 'paper', 'scissors'];
 const MAX_DRAWS = 5;
+const STARTING_LIVES = 3;
 
 // What each choice beats
 const BEATS = { rock: 'scissors', scissors: 'paper', paper: 'rock' };
@@ -38,7 +41,7 @@ class Room {
     this.state = 'phase1';
     this.phase1Choices = {};
     if (newRound) this.drawCount = 0;
-    this.io.to(this.code).emit('phase1_start');
+    this.io.to(this.code).emit('phase1_start', { duration: PHASE1_DURATION_MS });
 
     // If a player hasn't chosen after 5s, assign them a random choice so
     // the game never stalls.
@@ -126,7 +129,7 @@ class Room {
   startPhase2() {
     this.state = 'phase2';
     this.phase2Actions = {};
-    this.io.to(this.code).emit('phase2_start');
+    this.io.to(this.code).emit('phase2_start', { duration: PHASE2_DURATION_MS });
 
     this.phase2Timer = setTimeout(() => this.resolvePhase2(), PHASE2_DURATION_MS);
   }

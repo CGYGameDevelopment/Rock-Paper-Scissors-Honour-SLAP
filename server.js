@@ -12,17 +12,14 @@ const io = new Server(server, {
   cors: { origin: process.env.ALLOWED_ORIGIN || false },
 });
 
-// All active rooms, keyed by 4-letter code.
+// All active rooms, keyed by 3-digit code.
 const rooms = new Map();
 
 const ROOM_EXPIRY_MS = 3 * 60 * 1000; // 3 minutes
-const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
 function generateCode() {
   for (let i = 0; i < 10; i++) {
-    const code = Array.from({ length: 4 }, () =>
-      LETTERS[Math.floor(Math.random() * LETTERS.length)]
-    ).join('');
+    const code = String(Math.floor(100 + Math.random() * 900));
     if (!rooms.has(code)) return code;
   }
   return null;
@@ -66,13 +63,13 @@ io.on('connection', (socket) => {
   });
 
   // ── Join Room ──────────────────────────────────────────────────────────────
-  // Client provides a 4-letter code. Server validates and starts the match.
+  // Client provides a 3-digit code. Server validates and starts the match.
 
   socket.on('join_room', (data) => {
     if (!data || typeof data !== 'object') return;
     let { code } = data;
     if (typeof code !== 'string') return;
-    code = code.toUpperCase().trim();
+    code = code.trim();
 
     if (socket.data.roomCode) {
       return socket.emit('room_error', { message: 'You are already in a room.' });
