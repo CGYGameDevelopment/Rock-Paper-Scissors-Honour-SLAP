@@ -16,10 +16,13 @@ const io = new Server(server, {
 const rooms = new Map();
 
 const ROOM_EXPIRY_MS = 3 * 60 * 1000; // 3 minutes
+const CODE_MIN = 100;
+const CODE_MAX = 999;
+const CODE_GEN_ATTEMPTS = 10;
 
 function generateCode() {
-  for (let i = 0; i < 10; i++) {
-    const code = String(Math.floor(100 + Math.random() * 900));
+  for (let i = 0; i < CODE_GEN_ATTEMPTS; i++) {
+    const code = String(Math.floor(CODE_MIN + Math.random() * (CODE_MAX - CODE_MIN + 1)));
     if (!rooms.has(code)) return code;
   }
   return null;
@@ -33,7 +36,7 @@ function getRoomForSocket(socket) {
 
 io.on('connection', (socket) => {
   // ── Create Room ────────────────────────────────────────────────────────────
-  // Client asks to create a new room. Server generates a 4-letter code,
+  // Client asks to create a new room. Server generates a 3-digit code,
   // registers the room, and starts the 3-minute expiry clock.
 
   socket.on('create_room', () => {

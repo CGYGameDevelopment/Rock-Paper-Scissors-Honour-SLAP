@@ -31,7 +31,7 @@ class Room {
   // ─── Setup ────────────────────────────────────────────────────────────────
 
   addPlayer(socket) {
-    this.players.push({ socketId: socket.id, lives: 3 });
+    this.players.push({ socketId: socket.id, lives: STARTING_LIVES });
     socket.data.roomCode = this.code;
   }
 
@@ -101,7 +101,7 @@ class Room {
         // Leave 'phase1' state during the delay so any late-arriving rps_choice
         // packet (delayed by network) is rejected by the server.state check.
         this.state = 'draw_delay';
-        this.roundTimer = setTimeout(() => this.startPhase1(), 2000);
+        this.roundTimer = setTimeout(() => this.startPhase1(), DRAW_REPEAT_DELAY_MS);
         return;
       }
     }
@@ -230,7 +230,7 @@ class Room {
           opponentLives: opponent.lives,
         });
       }
-      this.roundTimer = setTimeout(() => this.startPhase1(true), 2000);
+      this.roundTimer = setTimeout(() => this.startPhase1(true), NEXT_ROUND_DELAY_MS);
     }
   }
 
