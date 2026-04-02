@@ -50,7 +50,8 @@
       "Bash(python -c \"from PIL import Image; img = Image.open\\(''Gemini_Generated_Image_bcwe71bcwe71bcwe.png''\\); print\\(''RPS size:'', img.size\\); img2 = Image.open\\(''Gemini_Generated_Image_rih5x9rih5x9rih5.png''\\); print\\(''SD size:'', img2.size\\)\")",
       "Bash(python -:*)",
       "Bash(npm test:*)",
-      "Bash(npx jest:*)"
+      "Bash(npx jest:*)",
+      "Bash(grep -E \"\\\\.\\(png|jpg|gif\\)$\")"
     ]
   }
 }
