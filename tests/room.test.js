@@ -128,9 +128,10 @@ describe('resolvePhase1 — role assignment', () => {
 
     const results = io._emitted.filter(e => e.event === 'phase1_result');
     const s1r = results.find(e => e.to === 's1');
-    // yourRole is intentionally NOT sent to clients — deducing the role from
-    // the RPS outcome is the core gameplay mechanic.
-    expect(s1r.data.yourRole).toBeUndefined();
+    // The payload must contain exactly these two keys — no role information.
+    // Roles are server-side only; deducing them from the RPS outcome is the
+    // core gameplay mechanic.
+    expect(Object.keys(s1r.data)).toEqual(['yourChoice', 'opponentChoice']);
     expect(s1r.data.yourChoice).toBe(c1);
     expect(s1r.data.opponentChoice).toBe(c2);
   });
@@ -146,6 +147,53 @@ describe('resolvePhase1 — role assignment', () => {
     expect(draws.find(e => e.to === 's2').data.yourChoice).toBe('rock');
     expect(room.drawCount).toBe(1);
     expect(room.state).toBe('draw_delay'); // waiting for delay before next phase1
+  });
+});
+
+describe('phase1 timer timeout', () => {
+  test('assigns a random choice to a non-submitting player then resolves', () => {
+    // Use a fresh room and call startPhase1() so the real timer is registered.
+    const rooms = new Map();
+    const io = makeIo();
+    const room = new Room('TEST', io, rooms);
+    rooms.set('TEST', room);
+    const s1 = makeSocket('s1');
+    const s2 = makeSocket('s2');
+    io._register(s1);
+    io._register(s2);
+    room.addPlayer(s1);
+    room.addPlayer(s2);
+
+    room.startPhase1(true);
+    room.receiveRpsChoice('s1', 'rock'); // s2 never submits
+
+    jest.advanceTimersByTime(5000); // PHASE1_DURATION_MS
+
+    // Phase 1 must have resolved: roles assigned, phase 2 started.
+    expect(room.roles.attacker).toBeDefined();
+    expect(room.roles.defender).toBeDefined();
+    expect(room.state).toBe('phase2');
+  });
+});
+
+describe('resolvePhase1 — MAX_DRAWS forced role assignment', () => {
+  test('after 5 consecutive draws roles are force-assigned and phase2 starts', () => {
+    const { room } = setupPhase1();
+
+    for (let i = 0; i < 5; i++) {
+      room.receiveRpsChoice('s1', 'rock');
+      room.receiveRpsChoice('s2', 'rock'); // draw every time
+      if (i < 4) {
+        // Fire the draw-delay timer so phase1 restarts before the next draw.
+        jest.advanceTimersByTime(2000); // DRAW_REPEAT_DELAY_MS
+      }
+    }
+
+    // On the 5th draw the server force-assigns roles instead of repeating.
+    expect(['s1', 's2']).toContain(room.roles.attacker);
+    expect(['s1', 's2']).toContain(room.roles.defender);
+    expect(room.roles.attacker).not.toBe(room.roles.defender);
+    expect(room.state).toBe('phase2');
   });
 });
 

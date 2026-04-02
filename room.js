@@ -11,6 +11,10 @@ const {
 
 const RPS_CHOICES = ['rock', 'paper', 'scissors'];
 
+function log(msg) {
+  console.log(`[${new Date().toISOString()}] ${msg}`);
+}
+
 // What each choice beats
 const BEATS = { rock: 'scissors', scissors: 'paper', paper: 'rock' };
 
@@ -44,6 +48,7 @@ class Room {
     this.state = 'phase1';
     this.phase1Choices = {};
     if (newRound) this.drawCount = 0;
+    log(`room=${this.code} phase1_start newRound=${newRound} drawCount=${this.drawCount}`);
     this.io.to(this.code).emit('phase1_start', { duration: PHASE1_DURATION_MS });
 
     // If a player hasn't chosen after 5s, assign them a random choice so
@@ -95,12 +100,14 @@ class Room {
       }
       if (this.drawCount >= MAX_DRAWS) {
         // Force random role assignment so the game can never stall indefinitely.
+        log(`room=${this.code} phase1_draw drawCount=${this.drawCount} — MAX_DRAWS reached, forcing roles`);
         this.drawCount = 0;
         const shuffled = [...this.players].sort(() => Math.random() - 0.5);
         attacker = shuffled[0].socketId;
         defender = shuffled[1].socketId;
         // fall through to role assignment below
       } else {
+        log(`room=${this.code} phase1_draw drawCount=${this.drawCount}`);
         // Leave 'phase1' state during the delay so any late-arriving rps_choice
         // packet (delayed by network) is rejected by the server.state check.
         this.state = 'draw_delay';
@@ -110,6 +117,7 @@ class Room {
     }
 
     this.roles = { attacker, defender };
+    log(`room=${this.code} phase1_resolved attacker=${attacker} defender=${defender} (${c1} vs ${c2})`);
 
     // Tell each player what was chosen in RPS — Phase 2 follows immediately.
     // Roles (attacker / defender) are deliberately NOT sent to clients: part of
@@ -132,6 +140,7 @@ class Room {
   startPhase2() {
     this.state = 'phase2';
     this.phase2Actions = {};
+    log(`room=${this.code} phase2_start`);
     this.io.to(this.code).emit('phase2_start', { duration: PHASE2_DURATION_MS });
 
     this.phase2Timer = setTimeout(() => this.resolvePhase2(), PHASE2_DURATION_MS);
@@ -199,11 +208,14 @@ class Room {
     if (attackerLosesLife) attackerPlayer.lives = Math.max(0, attackerPlayer.lives - 1);
     if (defenderLosesLife) defenderPlayer.lives = Math.max(0, defenderPlayer.lives - 1);
 
+    log(`room=${this.code} phase2_resolved outcome=${outcome} attacker_lives=${attackerPlayer.lives} defender_lives=${defenderPlayer.lives}`);
+
     const matchOver = attackerPlayer.lives <= 0 || defenderPlayer.lives <= 0;
 
     if (matchOver) {
       this.state = 'finished';
       const isDraw = attackerPlayer.lives <= 0 && defenderPlayer.lives <= 0;
+      log(`room=${this.code} game_over result=${isDraw ? 'draw' : (attackerPlayer.lives <= 0 ? 'attacker_loses' : 'defender_loses')}`);
 
       for (const player of this.players) {
         const opponent = this.players.find(p => p.socketId !== player.socketId);
