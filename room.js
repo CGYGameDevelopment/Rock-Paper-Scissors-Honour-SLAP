@@ -1,12 +1,15 @@
 'use strict';
 
-const PHASE1_DURATION_MS = 5000;
-const PHASE2_DURATION_MS = 3000;
-const DRAW_REPEAT_DELAY_MS = 2000;
-const NEXT_ROUND_DELAY_MS = 2000;
+const {
+  PHASE1_DURATION_MS,
+  PHASE2_DURATION_MS,
+  DRAW_REPEAT_DELAY_MS,
+  NEXT_ROUND_DELAY_MS,
+  MAX_DRAWS,
+  STARTING_LIVES,
+} = require('./config');
+
 const RPS_CHOICES = ['rock', 'paper', 'scissors'];
-const MAX_DRAWS = 5;
-const STARTING_LIVES = 3;
 
 // What each choice beats
 const BEATS = { rock: 'scissors', scissors: 'paper', paper: 'rock' };

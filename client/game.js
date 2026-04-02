@@ -167,3 +167,23 @@ document.getElementById('btn-again').addEventListener('click', () => {
   document.getElementById('input-code').value = '';
   showOnly('screen-lobby');
 });
+
+// ─── Keyboard controls ────────────────────────────────────────────────────────
+
+document.addEventListener('keydown', (e) => {
+  const phase1Active = !document.getElementById('screen-phase1').hidden;
+  const phase2Active = !document.getElementById('screen-phase2').hidden;
+
+  if (phase1Active) {
+    const keyToChoice = { ArrowLeft: 'rock', ArrowUp: 'paper', ArrowRight: 'scissors' };
+    const choice = keyToChoice[e.key];
+    if (!choice) return;
+    const btn = document.querySelector(`.rps-btn[data-choice="${choice}"]`);
+    if (btn && !btn.disabled) btn.click();
+  } else if (phase2Active) {
+    const slapBtn  = document.getElementById('btn-slap');
+    const dodgeBtn = document.getElementById('btn-dodge');
+    if (e.key === 'ArrowLeft'  && !slapBtn.disabled)  slapBtn.click();
+    if (e.key === 'ArrowRight' && !dodgeBtn.disabled) dodgeBtn.click();
+  }
+});

@@ -46,7 +46,11 @@
       "Bash(powershell.exe -Command \"Set-Location ''C:\\\\Users\\\\conal\\\\Desktop\\\\Rock-Paper-Scissors-Honour-SLAP''; & ''C:\\\\Program Files\\\\nodejs\\\\node.exe'' ''node_modules\\\\jest-cli\\\\bin\\\\jest.js'' --no-coverage 2>&1\")",
       "Bash(xargs wc:*)",
       "Bash(find . -not -path './node_modules/*' -not -path './.git/*' -not -path './.claude/*' -type f -exec ls -lh {})",
-      "Bash(sort -k2)"
+      "Bash(sort -k2)",
+      "Bash(python -c \"from PIL import Image; img = Image.open\\(''Gemini_Generated_Image_bcwe71bcwe71bcwe.png''\\); print\\(''RPS size:'', img.size\\); img2 = Image.open\\(''Gemini_Generated_Image_rih5x9rih5x9rih5.png''\\); print\\(''SD size:'', img2.size\\)\")",
+      "Bash(python -:*)",
+      "Bash(npm test:*)",
+      "Bash(npx jest:*)"
     ]
   }
 }

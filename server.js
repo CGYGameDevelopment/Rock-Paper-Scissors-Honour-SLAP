@@ -4,6 +4,12 @@ const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const Room = require('./room');
+const {
+  ROOM_EXPIRY_MS,
+  CODE_MIN,
+  CODE_MAX,
+  CODE_GEN_ATTEMPTS,
+} = require('./config');
 
 const app = express();
 app.use(express.static('client'));
@@ -15,10 +21,9 @@ const io = new Server(server, {
 // All active rooms, keyed by 3-digit code.
 const rooms = new Map();
 
-const ROOM_EXPIRY_MS = 3 * 60 * 1000; // 3 minutes
-const CODE_MIN = 100;
-const CODE_MAX = 999;
-const CODE_GEN_ATTEMPTS = 10;
+function log(msg) {
+  console.log(`[${new Date().toISOString()}] ${msg}`);
+}
 
 function generateCode() {
   for (let i = 0; i < CODE_GEN_ATTEMPTS; i++) {
@@ -35,30 +40,33 @@ function getRoomForSocket(socket) {
 // ─── Connection ──────────────────────────────────────────────────────────────
 
 io.on('connection', (socket) => {
+  log(`connect   ${socket.id}`);
+
   // ── Create Room ────────────────────────────────────────────────────────────
-  // Client asks to create a new room. Server generates a 3-digit code,
-  // registers the room, and starts the 3-minute expiry clock.
 
   socket.on('create_room', () => {
-    // Prevent a socket from owning multiple rooms simultaneously.
     if (socket.data.roomCode) {
+      log(`create_room rejected: ${socket.id} already in room ${socket.data.roomCode}`);
       return socket.emit('room_error', { message: 'You are already in a room.' });
     }
 
     const code = generateCode();
     if (!code) {
+      log(`create_room failed: no code available (rooms: ${rooms.size})`);
       return socket.emit('room_error', { message: 'Could not generate a room code. Try again.' });
     }
+
     const room = new Room(code, io, rooms);
     rooms.set(code, room);
-
     room.addPlayer(socket);
     socket.join(code);
     socket.emit('room_created', { code });
+    log(`create_room ${code} by ${socket.id}`);
 
     // Destroy the room if the second player never shows up.
     room.expiryTimer = setTimeout(() => {
       if (room.state === 'waiting') {
+        log(`room ${code} expired (no second player joined)`);
         socket.emit('room_expired');
         room.destroy();
       }
@@ -66,7 +74,6 @@ io.on('connection', (socket) => {
   });
 
   // ── Join Room ──────────────────────────────────────────────────────────────
-  // Client provides a 3-digit code. Server validates and starts the match.
 
   socket.on('join_room', (data) => {
     if (!data || typeof data !== 'object') return;
@@ -74,16 +81,25 @@ io.on('connection', (socket) => {
     if (typeof code !== 'string') return;
     code = code.trim();
 
+    // Validate format: must be exactly 3 decimal digits.
+    if (!/^\d{3}$/.test(code)) {
+      log(`join_room rejected: invalid code format "${code}" from ${socket.id}`);
+      return socket.emit('room_error', { message: 'Room code must be a 3-digit number.' });
+    }
+
     if (socket.data.roomCode) {
+      log(`join_room rejected: ${socket.id} already in room ${socket.data.roomCode}`);
       return socket.emit('room_error', { message: 'You are already in a room.' });
     }
 
     const room = rooms.get(code);
 
     if (!room) {
+      log(`join_room rejected: room ${code} not found (requested by ${socket.id})`);
       return socket.emit('room_error', { message: 'Room not found.' });
     }
     if (room.state !== 'waiting') {
+      log(`join_room rejected: room ${code} already in state "${room.state}"`);
       return socket.emit('room_error', { message: 'Game already in progress.' });
     }
     if (room.players.some(p => p.socketId === socket.id)) {
@@ -93,6 +109,7 @@ io.on('connection', (socket) => {
     clearTimeout(room.expiryTimer);
     room.addPlayer(socket);
     socket.join(code);
+    log(`join_room ${code} by ${socket.id} — starting game`);
 
     // Both players are in — start the game.
     room.startPhase1(true);
@@ -105,6 +122,7 @@ io.on('connection', (socket) => {
     const { choice } = data;
     const room = getRoomForSocket(socket);
     if (!room || room.state !== 'phase1') return;
+    log(`rps_choice room=${room.code} socket=${socket.id} choice=${choice}`);
     room.receiveRpsChoice(socket.id, choice);
   });
 
@@ -117,16 +135,20 @@ io.on('connection', (socket) => {
     const room = getRoomForSocket(socket);
     if (!room || room.state !== 'phase2') return;
     if (typeof timestamp !== 'number') return;
+    log(`phase2_action room=${room.code} socket=${socket.id} action=${action} ts=${timestamp}`);
     room.receivePhase2Action(socket.id, action, timestamp);
   });
 
   // ── Disconnect ─────────────────────────────────────────────────────────────
-  // Any disconnect during an active match is treated as a forfeit.
 
   socket.on('disconnect', () => {
     const room = getRoomForSocket(socket);
-    if (!room) return;
+    if (!room) {
+      log(`disconnect ${socket.id} (no room)`);
+      return;
+    }
 
+    log(`disconnect ${socket.id} from room ${room.code} (state: ${room.state})`);
     const opponent = room.players.find(p => p.socketId !== socket.id);
 
     if (room.state !== 'waiting' && room.state !== 'finished') {
@@ -143,5 +165,5 @@ io.on('connection', (socket) => {
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
-  console.log(`RPS: Honour SLAP server running on port ${PORT}`);
+  log(`RPS: Honour SLAP server running on port ${PORT}`);
 });

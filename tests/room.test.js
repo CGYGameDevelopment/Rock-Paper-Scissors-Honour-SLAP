@@ -128,7 +128,9 @@ describe('resolvePhase1 — role assignment', () => {
 
     const results = io._emitted.filter(e => e.event === 'phase1_result');
     const s1r = results.find(e => e.to === 's1');
-    expect(s1r.data.yourRole).toBe(expectedAttacker === 's1' ? 'attacker' : 'defender');
+    // yourRole is intentionally NOT sent to clients — deducing the role from
+    // the RPS outcome is the core gameplay mechanic.
+    expect(s1r.data.yourRole).toBeUndefined();
     expect(s1r.data.yourChoice).toBe(c1);
     expect(s1r.data.opponentChoice).toBe(c2);
   });
@@ -143,7 +145,7 @@ describe('resolvePhase1 — role assignment', () => {
     expect(draws.find(e => e.to === 's1').data.yourChoice).toBe('rock');
     expect(draws.find(e => e.to === 's2').data.yourChoice).toBe('rock');
     expect(room.drawCount).toBe(1);
-    expect(room.state).toBe('phase1'); // restarted
+    expect(room.state).toBe('draw_delay'); // waiting for delay before next phase1
   });
 });
 
