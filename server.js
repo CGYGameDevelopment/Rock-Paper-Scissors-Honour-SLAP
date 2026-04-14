@@ -6,8 +6,8 @@ const { Server } = require('socket.io');
 const Room = require('./room');
 const {
   ROOM_EXPIRY_MS,
-  CODE_MIN,
-  CODE_MAX,
+  CODE_LENGTH,
+  CODE_CHARS,
   CODE_GEN_ATTEMPTS,
 } = require('./config');
 
@@ -18,7 +18,7 @@ const io = new Server(server, {
   cors: { origin: process.env.ALLOWED_ORIGIN || false },
 });
 
-// All active rooms, keyed by 3-digit code.
+// All active rooms, keyed by 4-letter code.
 const rooms = new Map();
 
 function log(msg) {
@@ -27,7 +27,10 @@ function log(msg) {
 
 function generateCode() {
   for (let i = 0; i < CODE_GEN_ATTEMPTS; i++) {
-    const code = String(Math.floor(CODE_MIN + Math.random() * (CODE_MAX - CODE_MIN + 1)));
+    const code = Array.from(
+      { length: CODE_LENGTH },
+      () => CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)]
+    ).join('');
     if (!rooms.has(code)) return code;
   }
   return null;
@@ -81,10 +84,10 @@ io.on('connection', (socket) => {
     if (typeof code !== 'string') return;
     code = code.trim();
 
-    // Validate format: must be exactly 3 decimal digits.
-    if (!/^\d{3}$/.test(code)) {
+    // Validate format: must be exactly 4 uppercase letters.
+    if (!/^[A-Z]{4}$/.test(code)) {
       log(`join_room rejected: invalid code format "${code}" from ${socket.id}`);
-      return socket.emit('room_error', { message: 'Room code must be a 3-digit number.' });
+      return socket.emit('room_error', { message: 'Room code must be 4 uppercase letters (e.g. KXQT).' });
     }
 
     if (socket.data.roomCode) {

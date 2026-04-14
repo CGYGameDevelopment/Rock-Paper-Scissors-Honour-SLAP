@@ -54,10 +54,6 @@ class Player:
             log(name, "room expired (no second player joined in time)")
             self.done.set()
 
-        @sio.on("game_start")
-        def on_game_start():
-            log(name, "game started!")
-
         @sio.on("phase1_start")
         def on_phase1_start():
             log(name, f"Phase 1 — choosing '{self.rps_choice}'")
@@ -70,8 +66,7 @@ class Player:
         @sio.on("phase1_result")
         def on_phase1_result(data):
             log(name,
-                f"Phase 1 result: you={data['yourChoice']} opp={data['opponentChoice']} "
-                f"→ role={data['yourRole'].upper()}")
+                f"Phase 1 result: you={data['yourChoice']} opp={data['opponentChoice']}")
             self.events.append(("phase1_result", data))
 
         @sio.on("phase2_start")
@@ -85,7 +80,7 @@ class Player:
         @sio.on("phase2_result")
         def on_phase2_result(data):
             log(name,
-                f"Round over: outcome={data['outcome']} role={data['yourRole']} "
+                f"Round over: outcome={data['outcome']} "
                 f"lives={data['yourLives']}♥ (opp {data['opponentLives']}♥)")
             self.events.append(("phase2_result", data))
 

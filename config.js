@@ -3,8 +3,8 @@
 module.exports = {
   // Room lifecycle
   ROOM_EXPIRY_MS:    3 * 60 * 1000,
-  CODE_MIN:          100,
-  CODE_MAX:          999,
+  CODE_LENGTH:       4,
+  CODE_CHARS:        'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
   CODE_GEN_ATTEMPTS: 10,
 
   // Phase durations
