@@ -82,12 +82,12 @@ io.on('connection', (socket) => {
     if (!data || typeof data !== 'object') return;
     let { code } = data;
     if (typeof code !== 'string') return;
-    code = code.trim();
+    code = code.trim().toUpperCase();
 
-    // Validate format: must be exactly 4 uppercase letters.
+    // Validate format: must be exactly 4 letters (case-insensitive input).
     if (!/^[A-Z]{4}$/.test(code)) {
       log(`join_room rejected: invalid code format "${code}" from ${socket.id}`);
-      return socket.emit('room_error', { message: 'Room code must be 4 uppercase letters (e.g. KXQT).' });
+      return socket.emit('room_error', { message: 'Room code must be 4 letters (e.g. KXQT).' });
     }
 
     if (socket.data.roomCode) {

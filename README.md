@@ -18,7 +18,16 @@ Each player starts with **3 lives**. First to 0 lives loses.
 
 ## Multiplayer
 
-Friend-based only — no public matchmaking. One player creates a room and shares the 4-letter code with their friend. Unjoined rooms expire after 3 minutes.
+Friend-based only — no public matchmaking. One player creates a room and shares the 4-letter code (or the invite link, e.g. `http://localhost:3000/?room=KXQT`) with their friend. Opening an invite link joins the room automatically. Unjoined rooms expire after 3 minutes.
+
+## Controls
+
+| Phase | Mouse | Keyboard |
+| :---- | :---- | :------- |
+| Throw | Click Rock / Paper / Scissors | `←` Rock, `↑` Paper, `→` Scissors |
+| Slap  | Click SLAP / DODGE | `←` Slap, `→` Dodge |
+
+Sound effects are generated in the browser (no audio files) — toggle them with the speaker button in the corner.
 
 ## Tech Stack
 
@@ -30,10 +39,13 @@ Friend-based only — no public matchmaking. One player creates a room and share
 ```
 server.js       — Express + Socket.io server, event routing
 room.js         — Room state, game logic, phase transitions
+config.js       — Timings, room rules, starting lives
 client/
-  index.html    — Game UI
-  style.css     — Styles
-  game.js       — Socket.io client, all UI and game logic
+  index.html    — Game UI (lobby, phases, results)
+  style.css     — Arcade theme, animations
+  game.js       — Socket.io client, UI logic, WebAudio sound
+tests/
+  room.test.js  — Jest tests for the game logic
 ```
 
 ## Running Locally

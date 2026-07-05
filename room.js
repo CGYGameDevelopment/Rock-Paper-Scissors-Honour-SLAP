@@ -49,7 +49,14 @@ class Room {
     this.phase1Choices = {};
     if (newRound) this.drawCount = 0;
     log(`room=${this.code} phase1_start newRound=${newRound} drawCount=${this.drawCount}`);
-    this.io.to(this.code).emit('phase1_start', { duration: PHASE1_DURATION_MS });
+    // newRound / startingLives let the client show a round counter and a lives
+    // HUD without hardcoding server config. Identical for both players, so a
+    // room-wide broadcast stays safe (no role information leaks).
+    this.io.to(this.code).emit('phase1_start', {
+      duration: PHASE1_DURATION_MS,
+      newRound,
+      startingLives: STARTING_LIVES,
+    });
 
     // If a player hasn't chosen after 5s, assign them a random choice so
     // the game never stalls.

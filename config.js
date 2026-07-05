@@ -11,7 +11,7 @@ module.exports = {
   PHASE1_DURATION_MS:    5000,
   PHASE2_DURATION_MS:    3000,
   DRAW_REPEAT_DELAY_MS:  2000,
-  NEXT_ROUND_DELAY_MS:   2000,
+  NEXT_ROUND_DELAY_MS:   3000,
 
   // Game rules
   MAX_DRAWS:      5,

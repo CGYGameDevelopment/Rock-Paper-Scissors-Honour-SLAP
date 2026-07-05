@@ -2,57 +2,146 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>RPS: Honour SLAP</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+  <div id="app">
 
-  <!-- LOBBY -->
-  <div id="screen-lobby">
-    <h1>RPS: Honour SLAP</h1>
-    <button id="btn-create">Create Room</button>
-    <hr>
-    <input id="input-code" type="text" maxlength="4" placeholder="e.g. KXQT">
-    <button id="btn-join">Join Room</button>
-    <p id="lobby-error" class="error"></p>
+    <!-- HUD: lives + room code, visible during a match -->
+    <header id="hud" hidden>
+      <div class="hud-side" id="hud-side-you">
+        <span class="hud-label">YOU</span>
+        <span class="hud-hearts" id="hud-hearts-you"></span>
+      </div>
+      <span class="hud-code" id="hud-room-code"></span>
+      <div class="hud-side" id="hud-side-them">
+        <span class="hud-hearts" id="hud-hearts-them"></span>
+        <span class="hud-label">THEM</span>
+      </div>
+    </header>
+
+    <main>
+
+      <!-- LOBBY -->
+      <section id="screen-lobby">
+        <h1 class="title">
+          <span class="title-top">Rock &middot; Paper &middot; Scissors</span>
+          <span class="title-slap">HONOUR SLAP</span>
+        </h1>
+        <p class="tagline">Win the throw. Land the slap. Keep your honour.</p>
+
+        <div class="lobby-cards">
+          <div class="card">
+            <h2>Host a match</h2>
+            <button id="btn-create" class="btn btn-primary">Create Room</button>
+          </div>
+          <div class="card">
+            <h2>Join a friend</h2>
+            <div class="join-row">
+              <input id="input-code" type="text" maxlength="4" placeholder="KXQT"
+                     autocomplete="off" spellcheck="false" aria-label="Room code">
+              <button id="btn-join" class="btn">Join</button>
+            </div>
+          </div>
+        </div>
+
+        <p id="lobby-error" class="error" role="alert"></p>
+
+        <details class="rules">
+          <summary>How to play</summary>
+          <ol>
+            <li><strong>Throw</strong> &mdash; Rock, Paper, Scissors. 5 seconds. Draws replay.</li>
+            <li><strong>Slap</strong> &mdash; the throw winner must <em>SLAP</em>, the loser must
+                <em>DODGE</em>. 3 seconds. Nobody tells you which one you are.</li>
+            <li>Slap lands before the dodge &rarr; dodger loses a heart.
+                Dodge first &rarr; nobody loses one.</li>
+            <li>Wrong move or frozen stiff &rarr; <em>you</em> lose a heart.
+                Three hearts each. Last hand standing wins.</li>
+          </ol>
+        </details>
+      </section>
+
+      <!-- WAITING FOR OPPONENT -->
+      <section id="screen-waiting" hidden>
+        <h2 class="screen-heading">Room ready!</h2>
+        <div class="code-tiles" id="code-tiles"></div>
+        <p class="hint">Send the code &mdash; or the link &mdash; to a friend.</p>
+        <div class="invite-row">
+          <input id="invite-link" type="text" readonly aria-label="Invite link">
+        </div>
+        <div class="invite-row">
+          <button id="btn-copy-link" class="btn">Copy link</button>
+          <button id="btn-copy-code" class="btn">Copy code</button>
+        </div>
+        <p id="copy-feedback" class="feedback">&nbsp;</p>
+        <p class="waiting-dots">Waiting for opponent<span class="dots"><span>.</span><span>.</span><span>.</span></span></p>
+      </section>
+
+      <!-- PHASE 1: THROW -->
+      <section id="screen-phase1" hidden>
+        <p class="phase-label">ROUND <span id="round-number">1</span> &mdash; THROW!</p>
+        <div class="timer"><div class="timer-fill" id="phase1-bar"></div></div>
+        <p class="timer-text" id="phase1-timer-text"></p>
+        <div class="rps-row">
+          <button class="btn-rps" data-choice="rock"><span class="hand">&#9994;</span><span class="rps-name">Rock</span><kbd>&larr;</kbd></button>
+          <button class="btn-rps" data-choice="paper"><span class="hand">&#9995;</span><span class="rps-name">Paper</span><kbd>&uarr;</kbd></button>
+          <button class="btn-rps" data-choice="scissors"><span class="hand">&#9996;&#65039;</span><span class="rps-name">Scissors</span><kbd>&rarr;</kbd></button>
+        </div>
+        <p id="phase1-status" class="status">&nbsp;</p>
+      </section>
+
+      <!-- PHASE 2: SLAP -->
+      <section id="screen-phase2" hidden>
+        <p class="reveal" id="reveal-line"></p>
+        <div class="timer urgent"><div class="timer-fill" id="phase2-bar"></div></div>
+        <p class="timer-text" id="phase2-timer-text"></p>
+        <div class="action-row">
+          <button id="btn-slap" class="btn-action btn-slap-style"><span class="action-emoji">&#128075;</span>SLAP<kbd>&larr;</kbd></button>
+          <button id="btn-dodge" class="btn-action btn-dodge-style"><span class="action-emoji">&#128168;</span>DODGE<kbd>&rarr;</kbd></button>
+        </div>
+        <p class="hint">Won the throw? <strong>SLAP.</strong> Lost it? <strong>DODGE.</strong></p>
+        <p id="phase2-status" class="status">&nbsp;</p>
+      </section>
+
+      <!-- ROUND RESULT -->
+      <section id="screen-round-result" hidden>
+        <div class="stage">
+          <div class="fighter-col">
+            <div class="fighter" id="fighter-you">
+              <span class="hand-emoji" id="hand-you">&#129306;</span>
+              <span class="hit-mark" id="hit-you" hidden>&#128165;</span>
+            </div>
+            <span class="fighter-label">YOU</span>
+          </div>
+          <span class="vs">VS</span>
+          <div class="fighter-col">
+            <div class="fighter mirrored" id="fighter-them">
+              <span class="hand-emoji" id="hand-them">&#129306;</span>
+              <span class="hit-mark" id="hit-them" hidden>&#128165;</span>
+            </div>
+            <span class="fighter-label">THEM</span>
+          </div>
+        </div>
+        <h2 id="round-headline" class="headline"></h2>
+        <p id="round-detail" class="detail"></p>
+        <p class="hint">Next round&hellip;</p>
+      </section>
+
+      <!-- GAME OVER -->
+      <section id="screen-gameover" hidden>
+        <h2 id="gameover-result" class="gameover-title"></h2>
+        <p id="gameover-detail" class="detail"></p>
+        <p id="gameover-lives" class="detail"></p>
+        <button id="btn-again" class="btn btn-primary">Play Again</button>
+      </section>
+
+    </main>
   </div>
 
-  <!-- WAITING -->
-  <div id="screen-waiting" hidden>
-    <p>Room code: <strong id="room-code-display"></strong></p>
-    <p>Waiting for opponent...</p>
-  </div>
-
-  <!-- PHASE 1 -->
-  <div id="screen-phase1" hidden>
-    <p id="phase1-status"></p>
-    <p>Time: <span id="phase1-timer"></span>s</p>
-    <button class="rps-btn" data-choice="rock">Rock</button>
-    <button class="rps-btn" data-choice="paper">Paper</button>
-    <button class="rps-btn" data-choice="scissors">Scissors</button>
-  </div>
-
-  <!-- PHASE 2 -->
-  <div id="screen-phase2" hidden>
-    <p id="phase2-rps-result"></p>
-    <p>Time: <span id="phase2-timer"></span>s</p>
-    <button id="btn-slap">SLAP</button>
-    <button id="btn-dodge">DODGE</button>
-  </div>
-
-  <!-- ROUND RESULT -->
-  <div id="screen-round-result" hidden>
-    <p id="round-outcome"></p>
-    <p id="round-lives"></p>
-    <p>Next round starting...</p>
-  </div>
-
-  <!-- GAME OVER -->
-  <div id="screen-gameover" hidden>
-    <p id="gameover-result"></p>
-    <p id="gameover-lives"></p>
-    <button id="btn-again">Play Again</button>
-  </div>
+  <button id="btn-mute" aria-label="Toggle sound">&#128266;</button>
+  <div id="flash" aria-hidden="true"></div>
 
   <script src="/socket.io/socket.io.js"></script>
   <script src="game.js"></script>

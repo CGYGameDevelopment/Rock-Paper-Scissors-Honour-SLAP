@@ -80,9 +80,9 @@ Each player starts with **3 lives**. A player who loses all 3 lives loses the ma
 
 ### Frontend (Client)
 
-- **Framework:** Plain HTML5/CSS3 with Canvas API. Chosen over Phaser.js because it has no dependencies, no installation, and requires no prior framework knowledge — the right fit for a hobby project.
-- **Input:** Desktop-first. Primary inputs are Space/Arrow keys and Mouse. Touch support is a future consideration only.
-- **Visuals:** 2D hand sprites with distinct animations for:
+- **Framework:** Plain HTML5/CSS3 (DOM + CSS animations; Canvas turned out to be unnecessary). Chosen over Phaser.js because it has no dependencies, no installation, and requires no prior framework knowledge — the right fit for a hobby project.
+- **Input:** Desktop-first. Primary inputs are Arrow keys and Mouse. Touch support is a future consideration only.
+- **Visuals:** Emoji hand "sprites" with distinct animations for:
   - Slap
   - Dodge
   - Error/Flinch (illegal move feedback)
@@ -102,7 +102,14 @@ Each player starts with **3 lives**. A player who loses all 3 lives loses the ma
 
 ## 5. UI Requirements
 
-> **UI design and implementation is deferred.** No UI work should begin until explicitly scoped.
+> **Implemented (July 2026).** Plain HTML/CSS/JS, no build step, desktop-first with keyboard + mouse input.
+
+- **Lobby** — create room, or join by 4-letter code / invite link (`?room=CODE` auto-joins).
+- **Waiting room** — room code tiles, copy-code and copy-link buttons.
+- **HUD** — hearts for both players plus room code, visible throughout a match.
+- **Phase screens** — draining timer bars, big throw/slap/dodge buttons with keyboard hints. The slap screen shows both RPS choices but never the player's role (see §4).
+- **Round results** — emoji hand animations (slap swing / dodge lean / flinch), outcome headline, hit flash and screen shake when a heart is lost.
+- **Sound** — WebAudio-synthesised effects (no audio assets), mute toggle persisted in `localStorage`.
 
 ---
 
@@ -112,7 +119,6 @@ Each player starts with **3 lives**. A player who loses all 3 lives loses the ma
 - Accounts, authentication, or persistent stats
 - Spectator mode
 - Mobile-specific UI/UX design
-- UI implementation
 
 ---
 
